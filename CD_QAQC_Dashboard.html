@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CD QAQC Dashboard — Clearspace</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: #eef1f5; color: #333; font-size: 13px; }
+
+/* ── Header ── */
+.header { background: #1a3a5c; color: white; padding: 18px 32px; display: flex; justify-content: space-between; align-items: center; }
+.header h1 { font-size: 21px; font-weight: 700; letter-spacing: 0.3px; }
+.header .sub { font-size: 12px; opacity: 0.75; margin-top: 3px; }
+.header .meta { font-size: 12px; opacity: 0.8; text-align: right; line-height: 1.7; }
+
+.container { padding: 22px 32px; max-width: 1700px; }
+
+/* ── Notice ── */
+.notice { background: #fff8e1; border-left: 4px solid #f9a825; padding: 10px 14px; border-radius: 0 4px 4px 0; font-size: 12px; color: #555; margin-bottom: 20px; line-height: 1.6; }
+
+/* ── Section header ── */
+.section-title {
+  background: #1f4e7a; color: white;
+  padding: 10px 16px; border-radius: 4px 4px 0 0;
+  font-size: 13px; font-weight: 600;
+  display: flex; align-items: center; gap: 10px;
+  margin-top: 28px;
+}
+.section-title.grey { background: #4a5568; }
+.badge { background: rgba(255,255,255,0.2); padding: 2px 9px; border-radius: 12px; font-size: 11px; }
+
+/* ── Table ── */
+.table-wrapper { overflow-x: auto; background: white; border-radius: 0 0 4px 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+table { width: 100%; border-collapse: collapse; }
+th {
+  background: #f4f6f9; padding: 9px 11px; text-align: left;
+  font-weight: 600; font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.4px; color: #667; border-bottom: 2px solid #dde2ea;
+  white-space: nowrap;
+}
+td { padding: 9px 11px; border-bottom: 1px solid #f0f2f6; vertical-align: middle; white-space: nowrap; }
+tr:hover td { background: #f7f9fc; }
+tr:last-child td { border-bottom: none; }
+
+.qaqc-cell { text-align: center; }
+.qaqc-check { width: 16px; height: 16px; cursor: pointer; accent-color: #27ae60; }
+tr.done td { background: #f0faf4 !important; }
+tr.done td:first-child { border-left: 3px solid #27ae60; }
+.proj-id { font-weight: 700; color: #1a3a5c; }
+.proj-name-cell { max-width: 230px; white-space: normal; line-height: 1.35; }
+.ph { color: #c0c8d4; font-style: italic; }
+.date-cell { font-variant-numeric: tabular-nums; }
+.date-past { color: #999; }
+.date-upcoming { color: #1a3a5c; font-weight: 600; }
+.td-chip { background: #e8f4f8; color: #1a6a8a; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; }
+.no-data-row td { color: #aaa; font-style: italic; }
+
+/* ── Gantt ── */
+.gantt-wrap { background: white; border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); margin-top: 18px; overflow: hidden; }
+.gantt-head-bar { background: #1f4e7a; color: white; padding: 10px 16px; font-size: 13px; font-weight: 600; }
+.gantt-header-row { display: flex; border-bottom: 2px solid #dde2ea; }
+.gantt-label-col { width: 290px; min-width: 290px; padding: 8px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; color: #667; background: #f4f6f9; border-right: 1px solid #dde2ea; }
+.gantt-months { flex: 1; display: grid; grid-template-columns: repeat(6, 1fr); background: #f4f6f9; }
+.gantt-month-cell { padding: 8px 4px; text-align: center; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; color: #667; border-left: 1px solid #dde2ea; }
+
+.gantt-row { display: flex; border-bottom: 1px solid #f0f2f6; align-items: center; min-height: 48px; }
+.gantt-row:last-child { border-bottom: none; }
+.gantt-row:hover { background: #f7f9fc; }
+.gantt-row.done-row { background: #f0faf4; }
+
+.gantt-label { width: 290px; min-width: 290px; padding: 6px 12px; border-right: 1px solid #e8edf3; }
+.g-id { font-size: 11px; font-weight: 700; color: #1a3a5c; }
+.g-name { font-size: 11px; color: #556; line-height: 1.35; white-space: normal; }
+
+.gantt-bars { flex: 1; position: relative; height: 48px; }
+.gantt-bars::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0,
+    transparent calc(16.6667% - 1px),
+    #e8edf3 calc(16.6667% - 1px),
+    #e8edf3 16.6667%
+  );
+  pointer-events: none; z-index: 0;
+}
+.today-line {
+  position: absolute; top: 0; bottom: 0; width: 2px;
+  background: rgba(220,53,69,0.6); z-index: 3; pointer-events: none;
+}
+.bar-cd80 {
+  position: absolute; height: 20px; top: 14px;
+  background: #3a8fc7; border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; color: white; font-weight: 600;
+  overflow: hidden; white-space: nowrap; padding: 0 5px;
+  z-index: 2; box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+.bar-cd80.done-bar { background: #7ab8d4; }
+.milestone-ift {
+  position: absolute; top: 14px;
+  width: 16px; height: 16px;
+  background: #e67e22; border-radius: 2px;
+  transform: rotate(45deg); margin-left: -8px;
+  z-index: 4; box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+.milestone-pt {
+  position: absolute; top: 19px;
+  width: 10px; height: 10px;
+  background: #8e44ad; border-radius: 50%;
+  margin-left: -5px; z-index: 4;
+}
+.gantt-no-data {
+  flex: 1; display: flex; align-items: center;
+  padding-left: 16px; color: #bbb; font-size: 11px; font-style: italic;
+}
+.gantt-legend { display: flex; gap: 22px; padding: 10px 16px; background: #f4f6f9; border-top: 1px solid #dde2ea; flex-wrap: wrap; }
+.leg { display: flex; align-items: center; gap: 7px; font-size: 11px; color: #667; }
+.leg-bar { width: 22px; height: 10px; background: #3a8fc7; border-radius: 2px; }
+.leg-dia { width: 11px; height: 11px; background: #e67e22; transform: rotate(45deg); border-radius: 1px; margin: 0 2px; }
+.leg-dot { width: 10px; height: 10px; background: #8e44ad; border-radius: 50%; }
+.leg-line { width: 3px; height: 14px; background: rgba(220,53,69,0.6); }
+
+/* Section 2 */
+.s2-table td { color: #555; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>CD QAQC Dashboard</h1>
+    <div class="sub">B&#8209;Design — Construction Documents Quality Check Tracker</div>
+  </div>
+  <div class="meta">
+    <div>Synced from Wrike</div>
+    <div><strong>April 2, 2026</strong></div>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="notice">
+    <strong>&#9432; Integration limitation:</strong>
+    The current Wrike MCP tools only expose task schedule data — custom fields (Lead Designer, Designer, CAD Tech, PM, Engineer, SQFT, Technical Designer) are not returned by any available tool and cannot be pulled automatically. The Wrike MCP server configuration would need to be updated to expose those fields.
+    Projects 1597, 1616, 1626, and 1662 are in early phases (Feasibility / Schematic Design) — no CD schedule exists in Wrike yet.
+  </div>
+
+  <!-- ═══════════════════════════════
+       SECTION 1 — TD Projects
+  ═══════════════════════════════ -->
+  <div class="section-title">
+    &#9632;&ensp;Projects with Technical Designer &mdash; CD QAQC Required
+    <span class="badge" id="s1-badge"></span>
+  </div>
+
+  <div class="table-wrapper">
+    <table id="main-table">
+      <thead>
+        <tr>
+          <th style="width:46px">QAQC ✓</th>
+          <th>Proj #</th>
+          <th>Project Name</th>
+          <th>Lead Designer</th>
+          <th>Designer</th>
+          <th>CAD Tech</th>
+          <th>PM</th>
+          <th>Engineer</th>
+          <th>SQFT</th>
+          <th>Permit Submission</th>
+          <th>CD 80% ID &mdash; Start</th>
+          <th>CD 80% ID &mdash; End</th>
+          <th>Internal Page Turn</th>
+        </tr>
+      </thead>
+      <tbody id="main-tbody"></tbody>
+    </table>
+  </div>
+
+  <!-- ═══════════════════════════════
+       GANTT
+  ═══════════════════════════════ -->
+  <div class="gantt-wrap">
+    <div class="gantt-head-bar">&#128197;&ensp;Schedule — Draft CD 80% ID &amp; Issue for Tender &nbsp;(Jan–Jun 2026)</div>
+    <div class="gantt-header-row">
+      <div class="gantt-label-col">Project # &amp; Name</div>
+      <div class="gantt-months" id="month-headers"></div>
+    </div>
+    <div id="gantt-body"></div>
+    <div class="gantt-legend">
+      <div class="leg"><div class="leg-bar"></div> Draft CD 80% — ID</div>
+      <div class="leg"><div class="leg-dia"></div> Issue for Tender</div>
+      <div class="leg"><div class="leg-dot"></div> Internal Page Turn</div>
+      <div class="leg"><div class="leg-line"></div> Today (Apr 2)</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════
+       SECTION 2 — No TD
+  ═══════════════════════════════ -->
+  <div class="section-title grey" style="margin-top:36px;">
+    &#9633;&ensp;Projects without Technical Designer
+    <span class="badge" id="s2-badge"></span>
+  </div>
+  <div class="table-wrapper">
+    <table class="s2-table">
+      <thead>
+        <tr>
+          <th>Proj #</th>
+          <th>Project Name</th>
+        </tr>
+      </thead>
+      <tbody id="no-td-tbody"></tbody>
+    </table>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+/* ================================================================
+   PERSONNEL — requires Wrike custom fields integration update.
+   Lead Designer, Designer, CAD Tech, PM, Engineer, SQFT and the
+   Technical Designer tag are not exposed by the current Wrike MCP
+   tools. Leave blank until the integration is updated.
+   ================================================================ */
+const PERSONNEL = {
+  "1563": { leadDesigner: "", designer: "", cadTech: "", pm: "", engineer: "", sqft: "" },
+  "1597": { leadDesigner: "", designer: "", cadTech: "", pm: "", engineer: "", sqft: "" },
+  "1610": { leadDesigner: "", designer: "", cadTech: "", pm: "", engineer: "", sqft: "" },
+  "1616": { leadDesigner: "", designer: "", cadTech: "", pm: "", engineer: "", sqft: "" },
+  "1626": { leadDesigner: "", designer: "", cadTech: "", pm: "", engineer: "", sqft: "" },
+  "1662": { leadDesigner: "", designer: "", cadTech: "", pm: "", engineer: "", sqft: "" },
+};
+
+/* ================================================================
+   PROJECT DATA — TD projects only — Synced from Wrike 2026-04-02
+   ================================================================ */
+const PROJECTS_TD = [
+  {
+    id: "1563",
+    name: "Tangerine - 3389 Steeles Ave FL 8&9",
+    permitSub: "2026-02-19",
+    cd80Start: null, cd80End: null, pageTurn: null, ift: null
+  },
+  {
+    id: "1597",
+    name: "400 Applewood Suite 110 Vaughan - Kumon",
+    permitSub: null,
+    cd80Start: null, cd80End: null, pageTurn: null, ift: null
+  },
+  {
+    id: "1610",
+    name: "120 Victoria - 310 - Transplus",
+    permitSub: null,
+    cd80Start: "2026-04-24", cd80End: "2026-05-07", pageTurn: "2026-05-11", ift: "2026-05-15"
+  },
+  {
+    id: "1616",
+    name: "5160 Yonge - Canadian Scholarship Trust",
+    permitSub: null,
+    cd80Start: null, cd80End: null, pageTurn: null, ift: null
+  },
+  {
+    id: "1626",
+    name: "70 York - 1260 - Desjardins",
+    permitSub: null,
+    cd80Start: null, cd80End: null, pageTurn: null, ift: null
+  },
+  {
+    id: "1662",
+    name: "141 Adelaide St W - Spear Street Capital",
+    permitSub: null,
+    cd80Start: null, cd80End: null, pageTurn: null, ift: null
+  }
+];
+
+/* ================================================================
+   NON-TD PROJECTS — Section 2 (name only)
+   Synced from Wrike B-Design folder 2026-04-02
+   ================================================================ */
+const PROJECTS_NO_TD = [
+  { id: "1366", name: "JLL Property Management - ARAG - 121 King St Suite 1400" },
+  { id: "1434", name: "Bales Beall - 390 Bay St 6th" },
+  { id: "1505", name: "925 Bay St - Direct Travel" },
+  { id: "1536", name: "Hines NEUF - 150 Sterling Ave 4th FL Suite A" },
+  { id: "1541", name: "Perseus Group - 21 St Clair Ave E 700" },
+  { id: "1553", name: "Scotiabank - 100 Yonge 11th" },
+  { id: "1580", name: "121 King - 505 - JLL" },
+  { id: "1584", name: "121 King St 900 - CNIB" },
+  { id: "1614", name: "390 Bay - 16FL - Munich RE Vancity" },
+  { id: "1623", name: "1 City Centre Dr. Mississauga ON - JTI" },
+];
+
+/* ================================================================
+   GANTT CONFIG
+   ================================================================ */
+const GANTT_START  = new Date("2026-01-01");
+const GANTT_END    = new Date("2026-06-30");
+const GANTT_MONTHS = ["Jan 2026","Feb 2026","Mar 2026","Apr 2026","May 2026","Jun 2026"];
+const GANTT_DAYS   = (GANTT_END - GANTT_START) / 86400000;
+const TODAY_STR    = "2026-04-02";
+
+/* ================================================================
+   HELPERS
+   ================================================================ */
+function pct(dateStr) {
+  if (!dateStr) return null;
+  const days = (new Date(dateStr) - GANTT_START) / 86400000;
+  return Math.max(0, Math.min(100, (days / GANTT_DAYS) * 100));
+}
+
+function fmtDate(dateStr) {
+  if (!dateStr) return '<span class="ph">&mdash;</span>';
+  const d    = new Date(dateStr + "T12:00:00");
+  const past = d < new Date(TODAY_STR + "T12:00:00");
+  return `<span class="date-cell ${past ? "date-past" : "date-upcoming"}">${
+    d.toLocaleDateString("en-CA", { month: "short", day: "numeric", year: "numeric" })
+  }</span>`;
+}
+
+function isDone(id) { return localStorage.getItem("qaqc_" + id) === "true"; }
+
+function toggleQAQC(id, cb) {
+  localStorage.setItem("qaqc_" + id, cb.checked ? "true" : "false");
+  const row  = document.getElementById("row_"  + id);
+  const grow = document.getElementById("grow_" + id);
+  if (row)  row.classList.toggle("done",     cb.checked);
+  if (grow) grow.classList.toggle("done-row", cb.checked);
+}
+
+function ph(val) { return val ? val : '<span class="ph">&mdash;</span>'; }
+
+/* ================================================================
+   BUILD SECTION 1 TABLE
+   ================================================================ */
+function buildTable() {
+  document.getElementById("s1-badge").textContent =
+    PROJECTS_TD.length + " project" + (PROJECTS_TD.length !== 1 ? "s" : "");
+
+  document.getElementById("main-tbody").innerHTML = PROJECTS_TD.map(p => {
+    const done = isDone(p.id);
+    const pers = PERSONNEL[p.id] || {};
+    const hasCD = p.cd80Start || p.cd80End || p.pageTurn || p.ift;
+
+    return `<tr id="row_${p.id}" class="${done ? "done" : ""}${!hasCD && !p.permitSub ? " no-data-row" : ""}">
+      <td class="qaqc-cell">
+        <input type="checkbox" class="qaqc-check" ${done ? "checked" : ""}
+          onchange="toggleQAQC('${p.id}', this)"
+          title="Mark CD QAQC complete — ${p.id}">
+      </td>
+      <td class="proj-id">${p.id}</td>
+      <td class="proj-name-cell">${p.name}</td>
+      <td>${ph(pers.leadDesigner)}</td>
+      <td>${ph(pers.designer)}</td>
+      <td>${ph(pers.cadTech)}</td>
+      <td>${ph(pers.pm)}</td>
+      <td>${ph(pers.engineer)}</td>
+      <td>${ph(pers.sqft)}</td>
+      <td>${fmtDate(p.permitSub)}</td>
+      <td>${fmtDate(p.cd80Start)}</td>
+      <td>${fmtDate(p.cd80End)}</td>
+      <td>${fmtDate(p.pageTurn)}</td>
+    </tr>`;
+  }).join("");
+}
+
+/* ================================================================
+   BUILD GANTT
+   ================================================================ */
+function buildGantt() {
+  document.getElementById("month-headers").innerHTML =
+    GANTT_MONTHS.map(m => `<div class="gantt-month-cell">${m}</div>`).join("");
+
+  const todayPct = pct(TODAY_STR);
+
+  document.getElementById("gantt-body").innerHTML = PROJECTS_TD.map(p => {
+    const done    = isDone(p.id);
+    const left80  = pct(p.cd80Start);
+    const right80 = pct(p.cd80End);
+    const w80     = (left80 !== null && right80 !== null) ? Math.max(right80 - left80, 0.5) : null;
+    const leftIFT = pct(p.ift);
+    const leftPT  = pct(p.pageTurn);
+    const hasData = w80 !== null || leftIFT !== null;
+
+    let barsHtml = `<div class="today-line" style="left:${todayPct.toFixed(2)}%"></div>`;
+
+    if (w80 !== null) {
+      barsHtml += `<div class="bar-cd80 ${done ? "done-bar" : ""}"
+        style="left:${left80.toFixed(2)}%;width:${w80.toFixed(2)}%"
+        title="Draft CD 80% — ID&#10;${p.cd80Start} → ${p.cd80End}">CD 80%</div>`;
+    }
+    if (leftPT !== null) {
+      barsHtml += `<div class="milestone-pt"
+        style="left:${leftPT.toFixed(2)}%"
+        title="Internal Page Turn: ${p.pageTurn}"></div>`;
+    }
+    if (leftIFT !== null) {
+      barsHtml += `<div class="milestone-ift"
+        style="left:${leftIFT.toFixed(2)}%"
+        title="Issue for Tender: ${p.ift}"></div>`;
+    }
+
+    return `<div id="grow_${p.id}" class="gantt-row ${done ? "done-row" : ""}">
+      <div class="gantt-label">
+        <div class="g-id">${p.id}</div>
+        <div class="g-name">${p.name}</div>
+      </div>
+      ${hasData
+        ? `<div class="gantt-bars">${barsHtml}</div>`
+        : `<div class="gantt-no-data"><div class="today-line" style="left:${todayPct.toFixed(2)}%;position:absolute;height:100%;top:0"></div>CD not yet scheduled in Wrike</div>`
+      }
+    </div>`;
+  }).join("");
+}
+
+/* ================================================================
+   BUILD SECTION 2 TABLE
+   ================================================================ */
+function buildNoTD() {
+  document.getElementById("s2-badge").textContent =
+    PROJECTS_NO_TD.length + " project" + (PROJECTS_NO_TD.length !== 1 ? "s" : "");
+
+  document.getElementById("no-td-tbody").innerHTML = PROJECTS_NO_TD.map(p =>
+    `<tr>
+      <td class="proj-id">${p.id}</td>
+      <td>${p.name}</td>
+    </tr>`
+  ).join("");
+}
+
+/* ── Init ── */
+buildTable();
+buildGantt();
+buildNoTD();
+</script>
+</body>
+</html>
