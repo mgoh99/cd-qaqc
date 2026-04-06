@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Redirecting... — CD QAQC</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body class="login-body">
+  <div class="login-container">
+    <div class="login-card" style="text-align: center;">
+      <div class="login-brand">CD QAQC</div>
+      <p class="login-subtitle" id="status-msg">Processing authentication...</p>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var query = new URLSearchParams(window.location.search);
+      var hash = window.location.hash.substring(1);
+      var fragment = hash ? new URLSearchParams(hash) : new URLSearchParams();
+
+      var code = query.get('code') || fragment.get('code');
+      var accessToken = fragment.get('access_token');
+      var refreshToken = fragment.get('refresh_token') || '';
+      var type = fragment.get('type') || '';
+
+      var error = query.get('error_description') || query.get('error')
+                || fragment.get('error_description') || fragment.get('error');
+
+      if (error) {
+        window.location.href = '/login?error=' + encodeURIComponent(error);
+        return;
+      }
+
+      if (code) {
+        document.getElementById('status-msg').textContent = 'Signing you in...';
+        fetch('/auth/exchange-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: code }),
+        })
+          .then(function (resp) { return resp.json(); })
+          .then(function (data) {
+            if (data.redirect) {
+              window.location.href = data.redirect;
+            } else {
+              window.location.href = '/login?error=' + encodeURIComponent(data.error || 'Sign in failed');
+            }
+          })
+          .catch(function () {
+            window.location.href = '/login?error=' + encodeURIComponent('Sign in failed. Please try again.');
+          });
+        return;
+      }
+
+      if (accessToken) {
+        if (type === 'recovery') {
+          window.location.href = '/reset-password?access_token=' + encodeURIComponent(accessToken)
+            + '&refresh_token=' + encodeURIComponent(refreshToken);
+        } else {
+          document.getElementById('status-msg').textContent = 'Signing you in...';
+          fetch('/auth/token-login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ access_token: accessToken, refresh_token: refreshToken }),
+          })
+            .then(function (resp) { return resp.json(); })
+            .then(function (data) {
+              if (data.success) {
+                window.location.href = data.redirect || '/';
+              } else {
+                window.location.href = '/login?error=' + encodeURIComponent(data.error || 'Sign in failed');
+              }
+            })
+            .catch(function () {
+              window.location.href = '/login?error=' + encodeURIComponent('Sign in failed. Please try again.');
+            });
+        }
+        return;
+      }
+
+      document.getElementById('status-msg').textContent = 'No authentication data found. Redirecting to login...';
+      setTimeout(function () { window.location.href = '/login'; }, 1500);
+    })();
+  </script>
+</body>
+</html>

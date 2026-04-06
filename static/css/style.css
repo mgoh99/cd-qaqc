@@ -1,1 +1,140 @@
 /* Custom styles — Tailwind CDN handles utility classes */
+
+/* ── Auth Pages ── */
+.alert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+.alert-warning {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+}
+.alert-success {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+.login-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: #f8fafc;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+.login-container {
+  width: 100%;
+  max-width: 380px;
+  padding: 24px;
+}
+.login-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 32px;
+}
+.login-brand {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-bottom: 4px;
+}
+.login-subtitle {
+  font-size: 13px;
+  color: #64748b;
+  margin-bottom: 24px;
+}
+.login-field {
+  margin-bottom: 16px;
+}
+.login-field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 4px;
+  color: #334155;
+}
+.login-field input {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 13px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 0.15s;
+  font-family: inherit;
+  color: #0f172a;
+  background: #fff;
+  box-sizing: border-box;
+}
+.login-field input:focus {
+  border-color: #94a3b8;
+}
+.login-field input::placeholder {
+  color: #94a3b8;
+}
+.login-btn {
+  width: 100%;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  background: #1e293b;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 8px;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+.login-btn:hover {
+  background: #0f172a;
+}
+.login-btn-microsoft {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  background: #fff;
+  color: #1e293b;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+.login-btn-microsoft:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+.login-divider {
+  display: flex;
+  align-items: center;
+  margin: 16px 0;
+  gap: 12px;
+}
+.login-divider::before,
+.login-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #e2e8f0;
+}
+.login-divider span {
+  font-size: 12px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
