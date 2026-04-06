@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}CD QAQC Tracker{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <style>
+    #page-loader { position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+      background: linear-gradient(90deg, #6366f1, #8b5cf6); z-index: 9999;
+      transition: width 0.3s ease; }
+    #page-loader.done { width: 100%; opacity: 0; transition: width 0.2s ease, opacity 0.4s ease 0.1s; }
+  </style>
+  {% block head %}{% endblock %}
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen">
+<div id="page-loader"></div>
+<script>
+  const loader = document.getElementById('page-loader');
+  let w = 0;
+  const tick = setInterval(() => { w = Math.min(w + Math.random() * 15, 85); loader.style.width = w + '%'; }, 200);
+  window.addEventListener('load', () => { clearInterval(tick); loader.classList.add('done'); });
+</script>
+
+  <header class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between sticky top-0 z-10">
+    <div class="flex items-center gap-3">
+      <div class="w-1.5 h-5 bg-indigo-500 rounded-full"></div>
+      <h1 class="text-base font-bold tracking-tight text-gray-900">CD QAQC Tracker</h1>
+    </div>
+    {% block nav %}{% endblock %}
+    <span class="text-xs text-gray-400">Clearspace — Design Group</span>
+  </header>
+
+  <main class="px-6 py-8 max-w-screen-2xl mx-auto">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

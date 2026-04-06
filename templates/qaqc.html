@@ -1,0 +1,409 @@
+{% extends 'base.html' %}
+{% block title %}CD QAQC Tracker — Clearspace{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+{% endblock %}
+
+{% block content %}
+
+{# ── Page header ──────────────────────────────────────────────────────────── #}
+<div class="mb-6 flex items-center justify-between flex-wrap gap-3">
+  <div>
+    <h2 class="text-xl font-bold text-gray-900">CD QAQC Tracker</h2>
+    <p class="text-sm text-gray-500 mt-0.5">Construction Documents QA/QC review — B-Design projects with Technical Designer</p>
+  </div>
+  <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-gray-500">
+    <span class="flex items-center gap-1.5">
+      <span class="w-3 h-3 rounded-sm bg-indigo-400 inline-block"></span>Draft CD 80% – ID
+    </span>
+    <span class="flex items-center gap-1.5">
+      <span class="w-3 h-3 rounded-sm bg-amber-400 inline-block"></span>Internal Page Turn
+    </span>
+    <span class="flex items-center gap-1.5">
+      <span class="w-3 h-3 rounded-sm bg-violet-500 inline-block"></span>Issue for Tender
+    </span>
+    <span class="flex items-center gap-1.5">
+      <span class="w-3 h-3 rounded-sm bg-emerald-500 inline-block"></span>Permit Submission
+    </span>
+    <span class="flex items-center gap-1.5">
+      <span class="inline-block border-t-2 border-dashed border-red-400" style="width:20px"></span>Today
+    </span>
+  </div>
+</div>
+
+{# ── Gantt chart — all TD projects ────────────────────────────────────────── #}
+<section class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-8">
+  <h3 class="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wide">
+    Schedule Overview — Draft CD 80% ID &amp; Key Milestones
+  </h3>
+  <div style="position:relative;">
+    <canvas id="ganttChart"></canvas>
+  </div>
+</section>
+
+{# ── Main table — projects WITH Technical Designer ────────────────────────── #}
+<section class="mb-10">
+  <div class="flex items-center justify-between mb-3">
+    <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+      Projects with Technical Designer
+      <span class="ml-2 text-xs font-normal text-gray-400 normal-case">
+        ({{ with_tech|length }} project{{ 's' if with_tech|length != 1 }})
+      </span>
+    </h3>
+    <button id="clearChecks" class="text-xs text-gray-400 hover:text-red-500 transition-colors">
+      Clear all checks
+    </button>
+  </div>
+
+  <div class="overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
+    <table class="w-full text-sm text-left">
+      <thead>
+        <tr class="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 uppercase tracking-wide">
+          <th class="px-4 py-3 w-10 text-center">QAQC</th>
+          <th class="px-4 py-3">#</th>
+          <th class="px-4 py-3">Project</th>
+          <th class="px-4 py-3">PM</th>
+          <th class="px-4 py-3">Lead Designer</th>
+          <th class="px-4 py-3">Designer</th>
+          <th class="px-4 py-3">CAD Tech</th>
+          <th class="px-4 py-3">Engineer</th>
+          <th class="px-4 py-3 text-right">SQFT</th>
+          <th class="px-4 py-3">Permit Submission</th>
+          <th class="px-4 py-3">Draft CD 80% – ID</th>
+          <th class="px-4 py-3">Internal Page Turn</th>
+          <th class="px-4 py-3">Issue for Tender</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for p in with_tech %}
+        <tr id="row-{{ p.id }}"
+            class="hover:bg-gray-50 transition-colors {% if p.cd80_active %}bg-indigo-50/40{% endif %}">
+
+          {# QAQC checkbox #}
+          <td class="px-4 py-3 text-center">
+            <input type="checkbox"
+                   class="qaqc-check w-4 h-4 rounded accent-indigo-600 cursor-pointer"
+                   data-id="{{ p.id }}" />
+          </td>
+
+          {# Project number #}
+          <td class="px-4 py-3 font-mono text-xs text-gray-500 whitespace-nowrap">{{ p.number }}</td>
+
+          {# Project name #}
+          <td class="px-4 py-3">
+            <span class="font-medium text-gray-900 qaqc-name">{{ p.name }}</span>
+            {% if p.cd80_active %}
+            <span class="ml-2 inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-100 text-indigo-700">Active CD</span>
+            {% endif %}
+          </td>
+
+          {# People #}
+          <td class="px-4 py-3 text-gray-700 whitespace-nowrap">{{ p.pm or '—' }}</td>
+          <td class="px-4 py-3 text-gray-700 whitespace-nowrap">{{ p.lead_designer or '—' }}</td>
+          <td class="px-4 py-3 text-gray-700">{{ p.designer or '—' }}</td>
+          <td class="px-4 py-3 text-gray-700">{{ p.cad_tech or '—' }}</td>
+          <td class="px-4 py-3 text-gray-700 whitespace-nowrap">{{ p.engineer or '—' }}</td>
+
+          {# SQFT #}
+          <td class="px-4 py-3 text-right font-mono text-gray-700">
+            {{ '{:,}'.format(p.sqft) if p.sqft else '—' }}
+          </td>
+
+          {# Permit Submission #}
+          <td class="px-4 py-3 whitespace-nowrap">
+            {% if p.permit_sub_str %}
+            <span class="{% if p.permit_past %}text-emerald-700 font-medium{% else %}text-gray-600{% endif %}">
+              {{ p.permit_sub_str }}
+              {% if p.permit_past %}
+              <span class="ml-1 text-[10px] bg-emerald-100 text-emerald-700 px-1 py-0.5 rounded font-semibold">✓ Submitted</span>
+              {% endif %}
+            </span>
+            {% else %}
+            <span class="text-gray-300">—</span>
+            {% endif %}
+          </td>
+
+          {# Draft CD 80% – ID #}
+          <td class="px-4 py-3 whitespace-nowrap">
+            {% if p.cd80_start_str and p.cd80_end_str %}
+            <span class="{% if p.cd80_active %}text-indigo-700 font-medium{% else %}text-gray-600{% endif %}">
+              {{ p.cd80_start_str }} → {{ p.cd80_end_str }}
+            </span>
+            {% else %}
+            <span class="text-gray-300">—</span>
+            {% endif %}
+          </td>
+
+          {# Internal Page Turn #}
+          <td class="px-4 py-3 whitespace-nowrap text-gray-600">
+            {{ p.page_turn_str or '—' }}
+          </td>
+
+          {# Issue for Tender #}
+          <td class="px-4 py-3 whitespace-nowrap text-gray-600">
+            {{ p.issue_for_tender_str or '—' }}
+          </td>
+
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="13" class="px-4 py-8 text-center text-gray-400 text-sm">
+            No projects with Technical Designer found.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{# ── Secondary table — projects WITHOUT Technical Designer ────────────────── #}
+{% if without_tech %}
+<section>
+  <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+    Projects without Technical Designer
+    <span class="ml-2 text-xs font-normal text-gray-400 normal-case">
+      ({{ without_tech|length }} project{{ 's' if without_tech|length != 1 }} — no QAQC required)
+    </span>
+  </h3>
+  <div class="overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
+    <table class="w-full text-sm text-left">
+      <thead>
+        <tr class="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 uppercase tracking-wide">
+          <th class="px-4 py-3">#</th>
+          <th class="px-4 py-3">Project</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for p in without_tech %}
+        <tr class="hover:bg-gray-50 transition-colors">
+          <td class="px-4 py-3 font-mono text-xs text-gray-400">{{ p.number }}</td>
+          <td class="px-4 py-3 text-gray-500">{{ p.name }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+// ── Gantt chart ───────────────────────────────────────────────────────────────
+(function () {
+  const raw     = {{ gantt_json | safe }};
+  const DAY_MS  = 86400000;
+  const today   = new Date('{{ today_iso }}').getTime();
+
+  // X-axis: 6 weeks before today → 20 weeks after today
+  const xMin = today - 42  * DAY_MS;
+  const xMax = today + 140 * DAY_MS;
+
+  // Milestone marker width: 2-day band centred on the date
+  const MARK = DAY_MS;
+
+  const labels = raw.map(g => g.label);
+
+  function cd80Bar(g) {
+    if (!g.cd80_start || !g.cd80_end) return [null, null];
+    return [new Date(g.cd80_start).getTime(), new Date(g.cd80_end).getTime()];
+  }
+  function marker(g, field) {
+    if (!g[field]) return [null, null];
+    const t = new Date(g[field]).getTime();
+    return [t - MARK, t + MARK];
+  }
+
+  const cd80Bars     = raw.map(g => cd80Bar(g));
+  const pageTurn     = raw.map(g => marker(g, 'page_turn'));
+  const issueForTend = raw.map(g => marker(g, 'issue_for_tender'));
+  const permitSub    = raw.map(g => marker(g, 'permit_sub'));
+
+  const ctx = document.getElementById('ganttChart');
+  if (!ctx) return;
+
+  // Today vertical line plugin
+  const todayPlugin = {
+    id: 'todayLine',
+    afterDraw(chart) {
+      const { ctx: c, scales: { x }, chartArea: { top, bottom } } = chart;
+      const px = x.getPixelForValue(today);
+      c.save();
+      c.beginPath();
+      c.moveTo(px, top);
+      c.lineTo(px, bottom);
+      c.lineWidth = 2;
+      c.strokeStyle = 'rgba(239,68,68,0.65)';
+      c.setLineDash([5, 4]);
+      c.stroke();
+      // "Today" label
+      c.fillStyle = 'rgba(239,68,68,0.8)';
+      c.font = '10px Inter, system-ui, sans-serif';
+      c.textAlign = 'center';
+      c.fillText('Today', px, top - 4);
+      c.restore();
+    }
+  };
+
+  new Chart(ctx, {
+    type: 'bar',
+    plugins: [todayPlugin],
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Draft CD 80% – ID',
+          data: cd80Bars,
+          backgroundColor: raw.map(g => g.active ? 'rgba(99,102,241,0.45)' : 'rgba(99,102,241,0.2)'),
+          borderColor:     raw.map(g => g.active ? 'rgba(99,102,241,0.9)'  : 'rgba(99,102,241,0.5)'),
+          borderWidth: 1.5,
+          borderRadius: 4,
+          borderSkipped: false,
+          grouped: false,
+          barPercentage: 0.45,
+        },
+        {
+          label: 'Internal Page Turn',
+          data: pageTurn,
+          backgroundColor: 'rgba(245,158,11,0.9)',
+          borderColor:     'rgba(245,158,11,1)',
+          borderWidth: 0,
+          borderSkipped: false,
+          grouped: false,
+          barPercentage: 0.75,
+        },
+        {
+          label: 'Issue for Tender',
+          data: issueForTend,
+          backgroundColor: 'rgba(139,92,246,0.9)',
+          borderColor:     'rgba(139,92,246,1)',
+          borderWidth: 0,
+          borderSkipped: false,
+          grouped: false,
+          barPercentage: 0.75,
+        },
+        {
+          label: 'Permit Submission',
+          data: permitSub,
+          backgroundColor: 'rgba(16,185,129,0.9)',
+          borderColor:     'rgba(16,185,129,1)',
+          borderWidth: 0,
+          borderSkipped: false,
+          grouped: false,
+          barPercentage: 0.75,
+        },
+      ],
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label(ctx) {
+              const v = ctx.raw;
+              if (!v || v[0] === null) return null;
+              const fmt = ts => new Date(ts).toLocaleDateString('en-GB', {
+                day: '2-digit', month: 'short', year: 'numeric'
+              });
+              if (ctx.dataset.label === 'Draft CD 80% – ID') {
+                return ` ${ctx.dataset.label}: ${fmt(v[0])} → ${fmt(v[1])}`;
+              }
+              const mid = (v[0] + v[1]) / 2;
+              return ` ${ctx.dataset.label}: ${fmt(mid)}`;
+            },
+            // Hide tooltip for empty bars
+            filter(item) {
+              const v = item.raw;
+              return Array.isArray(v) && v[0] !== null;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          type: 'time',
+          min: xMin,
+          max: xMax,
+          time: {
+            unit: 'week',
+            displayFormats: { week: 'dd MMM' },
+            tooltipFormat:  'dd MMM yyyy',
+          },
+          grid:  { color: 'rgba(0,0,0,0.05)' },
+          ticks: { color: '#9ca3af', font: { size: 11 } },
+        },
+        y: {
+          grid: { display: false },
+          ticks: {
+            color: '#374151',
+            font:  { size: 12 },
+            // Show full label — no truncation by Chart.js
+            callback(val, index) { return labels[index]; }
+          },
+          afterFit(scale) { scale.width = 340; },
+        }
+      }
+    }
+  });
+
+  // Dynamic canvas height: enough rows for all projects
+  ctx.parentElement.style.height = Math.max(200, raw.length * 50 + 60) + 'px';
+})();
+
+
+// ── QAQC checkbox persistence (localStorage) ─────────────────────────────────
+(function () {
+  const KEY = 'qaqc_completed_v1';
+
+  function load() {
+    try { return new Set(JSON.parse(localStorage.getItem(KEY) || '[]')); }
+    catch { return new Set(); }
+  }
+  function save(set) {
+    localStorage.setItem(KEY, JSON.stringify([...set]));
+  }
+  function applyRow(cb, checked) {
+    const row = cb.closest('tr');
+    if (!row) return;
+    if (checked) {
+      row.classList.add('opacity-40');
+      row.querySelector('.qaqc-name')?.classList.add('line-through');
+    } else {
+      row.classList.remove('opacity-40');
+      row.querySelector('.qaqc-name')?.classList.remove('line-through');
+    }
+  }
+
+  const completed = load();
+
+  document.querySelectorAll('.qaqc-check').forEach(cb => {
+    const id = cb.dataset.id;
+    if (completed.has(id)) {
+      cb.checked = true;
+      applyRow(cb, true);
+    }
+    cb.addEventListener('change', () => {
+      const set = load();
+      if (cb.checked) { set.add(id); } else { set.delete(id); }
+      save(set);
+      applyRow(cb, cb.checked);
+    });
+  });
+
+  document.getElementById('clearChecks')?.addEventListener('click', () => {
+    save(new Set());
+    document.querySelectorAll('.qaqc-check').forEach(cb => {
+      cb.checked = false;
+      applyRow(cb, false);
+    });
+  });
+})();
+</script>
+{% endblock %}
