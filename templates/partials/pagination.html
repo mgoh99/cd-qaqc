@@ -1,0 +1,46 @@
+{% macro paginate(total, page, per_page, base_url, params={}) %}
+{% set total_pages = (total / per_page) | round(0, 'ceil') | int %}
+{% if total_pages < 1 %}{% set total_pages = 1 %}{% endif %}
+
+<div class="flex items-center justify-between pt-4">
+    <div class="flex items-center gap-2 text-sm text-gray-500">
+        <span>Show</span>
+        {% for size in [15, 50] %}
+        <a href="{{ base_url }}?per_page={{ size }}{% for k, v in params.items() %}&{{ k }}={{ v }}{% endfor %}"
+           class="px-2 py-1 rounded {% if per_page == size %}bg-brand-blue text-white{% else %}bg-gray-100 hover:bg-gray-200 text-gray-600{% endif %} text-xs font-medium">
+            {{ size }}
+        </a>
+        {% endfor %}
+        <a href="{{ base_url }}?per_page=all{% for k, v in params.items() %}&{{ k }}={{ v }}{% endfor %}"
+           class="px-2 py-1 rounded {% if per_page == total %}bg-brand-blue text-white{% else %}bg-gray-100 hover:bg-gray-200 text-gray-600{% endif %} text-xs font-medium">
+            All
+        </a>
+        <span class="ml-2 text-gray-400">{{ total }} total</span>
+    </div>
+
+    {% if total_pages > 1 %}
+    <div class="flex items-center gap-1">
+        {% if page > 1 %}
+        <a href="{{ base_url }}?page={{ page - 1 }}&per_page={{ per_page }}{% for k, v in params.items() %}&{{ k }}={{ v }}{% endfor %}"
+           class="px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200 text-sm text-gray-600">&laquo; Prev</a>
+        {% endif %}
+
+        {% for p in range(1, total_pages + 1) %}
+            {% if p == page %}
+            <span class="px-3 py-1.5 rounded bg-brand-blue text-white text-sm font-medium">{{ p }}</span>
+            {% elif p == 1 or p == total_pages or (p >= page - 2 and p <= page + 2) %}
+            <a href="{{ base_url }}?page={{ p }}&per_page={{ per_page }}{% for k, v in params.items() %}&{{ k }}={{ v }}{% endfor %}"
+               class="px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200 text-sm text-gray-600">{{ p }}</a>
+            {% elif p == page - 3 or p == page + 3 %}
+            <span class="text-gray-400 text-sm px-1">&hellip;</span>
+            {% endif %}
+        {% endfor %}
+
+        {% if page < total_pages %}
+        <a href="{{ base_url }}?page={{ page + 1 }}&per_page={{ per_page }}{% for k, v in params.items() %}&{{ k }}={{ v }}{% endfor %}"
+           class="px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200 text-sm text-gray-600">Next &raquo;</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endmacro %}

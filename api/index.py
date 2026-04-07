@@ -23,6 +23,12 @@ app.secret_key = config.FLASK_SECRET_KEY
 app.permanent_session_lifetime = timedelta(seconds=config.SESSION_LIFETIME_SECONDS)
 
 
+@app.context_processor
+def inject_current_user():
+    email = session.get("user_email", "")
+    return {"current_user": {"email": email} if email else None}
+
+
 # ── Jinja2 filters ────────────────────────────────────────────────────────────
 @app.template_filter('currency')
 def currency_filter(value):

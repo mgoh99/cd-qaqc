@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}CD QAQC Tracker — Clearspace{% endblock %}
+{% block title %}Dashboard{% endblock %}
 
 {% block head %}
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
@@ -10,18 +10,18 @@
 {# ── Page header ──────────────────────────────────────────────────────────── #}
 <div class="mb-6 flex items-center justify-between flex-wrap gap-3">
   <div>
-    <h2 class="text-xl font-bold text-gray-900">CD QAQC Tracker</h2>
+    <h1 class="text-2xl font-medium tracking-tight">CD QAQC Tracker</h1>
     <p class="text-sm text-gray-500 mt-0.5">Construction Documents QA/QC review — B-Design projects with Technical Designer</p>
   </div>
-  <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-gray-500">
+  <div class="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-gray-500">
     <span class="flex items-center gap-1.5">
-      <span class="w-3 h-3 rounded-sm bg-indigo-400 inline-block"></span>Draft CD 80% – ID
+      <span class="w-3 h-3 rounded-sm inline-block" style="background:#3BABFF;opacity:0.7"></span>Draft CD 80% – ID
     </span>
     <span class="flex items-center gap-1.5">
       <span class="w-3 h-3 rounded-sm bg-amber-400 inline-block"></span>Internal Page Turn
     </span>
     <span class="flex items-center gap-1.5">
-      <span class="w-3 h-3 rounded-sm bg-violet-500 inline-block"></span>Issue for Tender
+      <span class="w-3 h-3 rounded-sm inline-block" style="background:#323D4C"></span>Issue for Tender
     </span>
     <span class="flex items-center gap-1.5">
       <span class="w-3 h-3 rounded-sm bg-emerald-500 inline-block"></span>Permit Submission
@@ -33,10 +33,8 @@
 </div>
 
 {# ── Gantt chart — all TD projects ────────────────────────────────────────── #}
-<section class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-8">
-  <h3 class="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wide">
-    Schedule Overview — Draft CD 80% ID &amp; Key Milestones
-  </h3>
+<section class="card mb-8">
+  <p class="card-title">Schedule Overview — Draft CD 80% ID &amp; Key Milestones</p>
   <div style="position:relative;">
     <canvas id="ganttChart"></canvas>
   </div>
@@ -45,78 +43,76 @@
 {# ── Main table — projects WITH Technical Designer ────────────────────────── #}
 <section class="mb-10">
   <div class="flex items-center justify-between mb-3">
-    <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">
-      Projects with Technical Designer
-      <span class="ml-2 text-xs font-normal text-gray-400 normal-case">
-        ({{ with_tech|length }} project{{ 's' if with_tech|length != 1 }})
-      </span>
-    </h3>
-    <button id="clearChecks" class="text-xs text-gray-400 hover:text-red-500 transition-colors">
+    <div>
+      <span class="text-xs font-semibold text-gray-400 uppercase tracking-widest">Projects with Technical Designer</span>
+      <span class="ml-2 text-xs text-gray-400">({{ with_tech|length }} project{{ 's' if with_tech|length != 1 }})</span>
+    </div>
+    <button id="clearChecks" class="text-xs text-gray-400 hover:text-brand-red-light transition-colors">
       Clear all checks
     </button>
   </div>
 
-  <div class="overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
-    <table class="w-full text-sm text-left">
+  <div class="card p-0 overflow-hidden overflow-x-auto">
+    <table class="table-main w-full text-left">
       <thead>
-        <tr class="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 uppercase tracking-wide">
-          <th class="px-4 py-3 w-10 text-center">QAQC</th>
-          <th class="px-4 py-3">#</th>
-          <th class="px-4 py-3">Project</th>
-          <th class="px-4 py-3">PM</th>
-          <th class="px-4 py-3">Lead Designer</th>
-          <th class="px-4 py-3">Designer</th>
-          <th class="px-4 py-3">CAD Tech</th>
-          <th class="px-4 py-3">Engineer</th>
-          <th class="px-4 py-3 text-right">SQFT</th>
-          <th class="px-4 py-3">Permit Submission</th>
-          <th class="px-4 py-3">Draft CD 80% – ID</th>
-          <th class="px-4 py-3">Internal Page Turn</th>
-          <th class="px-4 py-3">Issue for Tender</th>
+        <tr>
+          <th class="w-10 text-center">QAQC</th>
+          <th>#</th>
+          <th class="w-80">Project</th>
+          <th>PM</th>
+          <th>Lead Designer</th>
+          <th>Designer</th>
+          <th>CAD Tech</th>
+          <th>Engineer</th>
+          <th class="text-right">SQFT</th>
+          <th>Permit Submission</th>
+          <th>Draft CD 80% – ID</th>
+          <th>Internal Page Turn</th>
+          <th>Issue for Tender</th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-gray-100">
+      <tbody>
         {% for p in with_tech %}
         <tr id="row-{{ p.id }}"
-            class="hover:bg-gray-50 transition-colors {% if p.cd80_active %}bg-indigo-50/40{% endif %}">
+            {% if p.cd80_active %}style="background:rgba(59,171,255,0.05)"{% endif %}>
 
           {# QAQC checkbox #}
-          <td class="px-4 py-3 text-center">
+          <td class="text-center">
             <input type="checkbox"
-                   class="qaqc-check w-4 h-4 rounded accent-indigo-600 cursor-pointer"
+                   class="qaqc-check w-4 h-4 rounded cursor-pointer accent-[#3BABFF]"
                    data-id="{{ p.id }}" />
           </td>
 
           {# Project number #}
-          <td class="px-4 py-3 font-mono text-xs text-gray-500 whitespace-nowrap">{{ p.number }}</td>
+          <td class="font-mono text-xs text-gray-400 whitespace-nowrap">{{ p.number }}</td>
 
           {# Project name #}
-          <td class="px-4 py-3">
-            <span class="font-medium text-gray-900 qaqc-name">{{ p.name }}</span>
+          <td>
+            <span class="font-medium qaqc-name">{{ p.name }}</span>
             {% if p.cd80_active %}
-            <span class="ml-2 inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-100 text-indigo-700">Active CD</span>
+            <span class="ml-2 stage-badge badge-blue-light">Active CD</span>
             {% endif %}
           </td>
 
           {# People #}
-          <td class="px-4 py-3 text-gray-700 whitespace-nowrap">{{ p.pm or '—' }}</td>
-          <td class="px-4 py-3 text-gray-700 whitespace-nowrap">{{ p.lead_designer or '—' }}</td>
-          <td class="px-4 py-3 text-gray-700">{{ p.designer or '—' }}</td>
-          <td class="px-4 py-3 text-gray-700">{{ p.cad_tech or '—' }}</td>
-          <td class="px-4 py-3 text-gray-700 whitespace-nowrap">{{ p.engineer or '—' }}</td>
+          <td class="whitespace-nowrap text-gray-600">{{ p.pm or '—' }}</td>
+          <td class="whitespace-nowrap text-gray-600">{{ p.lead_designer or '—' }}</td>
+          <td class="text-gray-600">{{ p.designer or '—' }}</td>
+          <td class="text-gray-600">{{ p.cad_tech or '—' }}</td>
+          <td class="whitespace-nowrap text-gray-600">{{ p.engineer or '—' }}</td>
 
           {# SQFT #}
-          <td class="px-4 py-3 text-right font-mono text-gray-700">
+          <td class="text-right font-mono text-gray-600">
             {{ '{:,}'.format(p.sqft) if p.sqft else '—' }}
           </td>
 
           {# Permit Submission #}
-          <td class="px-4 py-3 whitespace-nowrap">
+          <td class="whitespace-nowrap">
             {% if p.permit_sub_str %}
             <span class="{% if p.permit_past %}text-emerald-700 font-medium{% else %}text-gray-600{% endif %}">
               {{ p.permit_sub_str }}
               {% if p.permit_past %}
-              <span class="ml-1 text-[10px] bg-emerald-100 text-emerald-700 px-1 py-0.5 rounded font-semibold">✓ Submitted</span>
+              <span class="ml-1 stage-badge" style="background:rgba(16,185,129,0.12);color:#065f46">✓ Submitted</span>
               {% endif %}
             </span>
             {% else %}
@@ -125,9 +121,9 @@
           </td>
 
           {# Draft CD 80% – ID #}
-          <td class="px-4 py-3 whitespace-nowrap">
+          <td class="whitespace-nowrap">
             {% if p.cd80_start_str and p.cd80_end_str %}
-            <span class="{% if p.cd80_active %}text-indigo-700 font-medium{% else %}text-gray-600{% endif %}">
+            <span class="{% if p.cd80_active %}text-brand-blue font-medium{% else %}text-gray-600{% endif %}">
               {{ p.cd80_start_str }} → {{ p.cd80_end_str }}
             </span>
             {% else %}
@@ -136,19 +132,19 @@
           </td>
 
           {# Internal Page Turn #}
-          <td class="px-4 py-3 whitespace-nowrap text-gray-600">
+          <td class="whitespace-nowrap text-gray-600">
             {{ p.page_turn_str or '—' }}
           </td>
 
           {# Issue for Tender #}
-          <td class="px-4 py-3 whitespace-nowrap text-gray-600">
+          <td class="whitespace-nowrap text-gray-600">
             {{ p.issue_for_tender_str or '—' }}
           </td>
 
         </tr>
         {% else %}
         <tr>
-          <td colspan="13" class="px-4 py-8 text-center text-gray-400 text-sm">
+          <td colspan="13" class="text-center text-gray-400 py-12">
             No projects with Technical Designer found.
           </td>
         </tr>
@@ -161,25 +157,23 @@
 {# ── Secondary table — projects WITHOUT Technical Designer ────────────────── #}
 {% if without_tech %}
 <section>
-  <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
-    Projects without Technical Designer
-    <span class="ml-2 text-xs font-normal text-gray-400 normal-case">
-      ({{ without_tech|length }} project{{ 's' if without_tech|length != 1 }} — no QAQC required)
-    </span>
-  </h3>
-  <div class="overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
-    <table class="w-full text-sm text-left">
+  <div class="mb-3">
+    <span class="text-xs font-semibold text-gray-400 uppercase tracking-widest">Projects without Technical Designer</span>
+    <span class="ml-2 text-xs text-gray-400">({{ without_tech|length }} project{{ 's' if without_tech|length != 1 }} — no QAQC required)</span>
+  </div>
+  <div class="card p-0 overflow-hidden">
+    <table class="table-main w-full text-left">
       <thead>
-        <tr class="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 uppercase tracking-wide">
-          <th class="px-4 py-3">#</th>
-          <th class="px-4 py-3">Project</th>
+        <tr>
+          <th>#</th>
+          <th>Project</th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-gray-100">
+      <tbody>
         {% for p in without_tech %}
-        <tr class="hover:bg-gray-50 transition-colors">
-          <td class="px-4 py-3 font-mono text-xs text-gray-400">{{ p.number }}</td>
-          <td class="px-4 py-3 text-gray-500">{{ p.name }}</td>
+        <tr>
+          <td class="font-mono text-xs text-gray-400">{{ p.number }}</td>
+          <td class="text-gray-500">{{ p.name }}</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -240,9 +234,8 @@
       c.strokeStyle = 'rgba(239,68,68,0.65)';
       c.setLineDash([5, 4]);
       c.stroke();
-      // "Today" label
       c.fillStyle = 'rgba(239,68,68,0.8)';
-      c.font = '10px Inter, system-ui, sans-serif';
+      c.font = '10px DM Sans, system-ui, sans-serif';
       c.textAlign = 'center';
       c.fillText('Today', px, top - 4);
       c.restore();
@@ -258,8 +251,8 @@
         {
           label: 'Draft CD 80% – ID',
           data: cd80Bars,
-          backgroundColor: raw.map(g => g.active ? 'rgba(99,102,241,0.45)' : 'rgba(99,102,241,0.2)'),
-          borderColor:     raw.map(g => g.active ? 'rgba(99,102,241,0.9)'  : 'rgba(99,102,241,0.5)'),
+          backgroundColor: raw.map(g => g.active ? 'rgba(59,171,255,0.45)' : 'rgba(59,171,255,0.18)'),
+          borderColor:     raw.map(g => g.active ? 'rgba(59,171,255,0.9)'  : 'rgba(59,171,255,0.45)'),
           borderWidth: 1.5,
           borderRadius: 4,
           borderSkipped: false,
@@ -279,8 +272,8 @@
         {
           label: 'Issue for Tender',
           data: issueForTend,
-          backgroundColor: 'rgba(139,92,246,0.9)',
-          borderColor:     'rgba(139,92,246,1)',
+          backgroundColor: 'rgba(50,61,76,0.85)',
+          borderColor:     'rgba(50,61,76,1)',
           borderWidth: 0,
           borderSkipped: false,
           grouped: false,
@@ -318,7 +311,6 @@
               const mid = (v[0] + v[1]) / 2;
               return ` ${ctx.dataset.label}: ${fmt(mid)}`;
             },
-            // Hide tooltip for empty bars
             filter(item) {
               const v = item.raw;
               return Array.isArray(v) && v[0] !== null;
@@ -336,15 +328,14 @@
             displayFormats: { week: 'dd MMM' },
             tooltipFormat:  'dd MMM yyyy',
           },
-          grid:  { color: 'rgba(0,0,0,0.05)' },
-          ticks: { color: '#9ca3af', font: { size: 11 } },
+          grid:  { color: 'rgba(0,0,0,0.04)' },
+          ticks: { color: '#9ca3af', font: { size: 11, family: 'DM Sans, sans-serif' } },
         },
         y: {
           grid: { display: false },
           ticks: {
             color: '#374151',
-            font:  { size: 12 },
-            // Show full label — no truncation by Chart.js
+            font:  { size: 12, family: 'DM Sans, sans-serif' },
             callback(val, index) { return labels[index]; }
           },
           afterFit(scale) { scale.width = 340; },

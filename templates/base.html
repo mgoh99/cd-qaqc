@@ -1,42 +1,77 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{% block title %}CD QAQC Tracker{% endblock %}</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
-  <style>
-    #page-loader { position: fixed; top: 0; left: 0; width: 0%; height: 3px;
-      background: linear-gradient(90deg, #6366f1, #8b5cf6); z-index: 9999;
-      transition: width 0.3s ease; }
-    #page-loader.done { width: 100%; opacity: 0; transition: width 0.2s ease, opacity 0.4s ease 0.1s; }
-  </style>
-  {% block head %}{% endblock %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CD QAQC{% endblock %} | CD QAQC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['DM Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            blue: '#3BABFF',
+                            'blue-dark': '#323D4C',
+                            charcoal: '#16191A',
+                            white: '#FFFFFF',
+                            'red-light': '#F05A5A',
+                            'red-dark': '#692729',
+                            'green-light': '#B3C100',
+                            'green-dark': '#3F4D32',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block head %}{% endblock %}
 </head>
-<body class="bg-gray-50 text-gray-800 min-h-screen">
-<div id="page-loader"></div>
-<script>
-  const loader = document.getElementById('page-loader');
-  let w = 0;
-  const tick = setInterval(() => { w = Math.min(w + Math.random() * 15, 85); loader.style.width = w + '%'; }, 200);
-  window.addEventListener('load', () => { clearInterval(tick); loader.classList.add('done'); });
-</script>
+<body class="bg-gray-50 font-sans text-brand-charcoal antialiased">
+    <!-- Top header -->
+    <header class="bg-brand-blue-dark px-8 py-4 flex items-center justify-between">
+        <div>
+            <span class="text-white text-[17px] font-semibold tracking-tight">CD QAQC</span>
+            <span class="text-white/40 text-xs ml-3">Clearspace — Design Group</span>
+        </div>
+        {% if current_user and current_user.email %}
+        <div class="flex items-center gap-4">
+            <span class="text-gray-400 text-[13px]">{{ current_user.email }}</span>
+            <a href="/logout" class="text-gray-500 text-xs hover:text-white transition-colors">Sign out</a>
+        </div>
+        {% endif %}
+    </header>
 
-  <header class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between sticky top-0 z-10">
-    <div class="flex items-center gap-3">
-      <div class="w-1.5 h-5 bg-indigo-500 rounded-full"></div>
-      <h1 class="text-base font-bold tracking-tight text-gray-900">CD QAQC Tracker</h1>
-    </div>
-    {% block nav %}{% endblock %}
-    <span class="text-xs text-gray-400">Clearspace — Design Group</span>
-  </header>
+    <main class="min-h-screen">
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="px-10 pt-6 space-y-2">
+            {% for category, message in messages %}
+            <div class="flash-msg flex items-center justify-between px-4 py-3 rounded-lg text-[15px]
+                {% if category == 'success' %}bg-green-50 text-brand-green-dark border border-green-200
+                {% elif category == 'error' %}bg-red-50 text-brand-red-dark border border-red-200
+                {% else %}bg-blue-50 text-brand-blue-dark border border-blue-200{% endif %}">
+                <span>{{ message }}</span>
+                <button onclick="this.parentElement.remove()" class="ml-4 opacity-60 hover:opacity-100">&times;</button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
 
-  <main class="px-6 py-8 max-w-screen-2xl mx-auto">
-    {% block content %}{% endblock %}
-  </main>
-
-  {% block scripts %}{% endblock %}
+        <div class="px-10 py-9">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
 </body>
 </html>

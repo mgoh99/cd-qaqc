@@ -1,0 +1,13 @@
+{% macro sort_th(label, field, current_sort, current_dir, base_url, params={}, th_class='') %}
+{% set next_dir = 'desc' if current_sort == field and current_dir == 'asc' else 'asc' %}
+{% set is_active = current_sort == field %}
+<th class="{{ th_class }}">
+  <a href="{{ base_url }}?sort={{ field }}&dir={{ next_dir }}{% for k, v in params.items() %}{% if v %}&{{ k }}={{ v }}{% endif %}{% endfor %}"
+     class="inline-flex items-center gap-1 cursor-pointer select-none {% if is_active %}text-brand-charcoal{% else %}hover:text-gray-600{% endif %}{% if th_class %} justify-end{% endif %}">
+    {{ label }}
+    <span class="text-[10px] {% if is_active %}text-brand-blue{% else %}text-gray-300{% endif %}">
+      {% if is_active %}{{ '&#9650;' if current_dir == 'asc' else '&#9660;' }}{% else %}&#9650;{% endif %}
+    </span>
+  </a>
+</th>
+{% endmacro %}
